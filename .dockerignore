@@ -1,0 +1,15 @@
+.git
+.venv
+db.sqlite3
+media
+staticfiles
+__pycache__
+*.pyc
+.env
+*.log
+.server-*.log
+.coverage
+htmlcov
+.pytest_cache
+.idea
+.vscode

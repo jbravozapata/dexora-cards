@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Dexora Cards · Colecciona. Organiza. Descubre.{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-atmosphere" aria-hidden="true">
+    <span class="hero-stars"></span>
+    <span class="hero-orbit orbit-one"></span>
+    <span class="hero-orbit orbit-two"></span>
+    <span class="hero-orbit orbit-three"></span>
+    <span class="hero-scan"></span>
+  </div>
+  <div class="shell hero-grid hero-centered">
+    <div class="hero-art reveal" aria-label="Selección de cartas del archivo">
+      {% for card in featured_cards|slice:":3" %}
+        <a class="floating-card card-{{ forloop.counter }}" href="{{ card.get_absolute_url }}">
+          {% if card.has_real_image %}<img src="{{ card.effective_image }}" alt="Carta {{ card.name }}" width="367" height="512">{% else %}<span class="card-placeholder"><small>DEXORA</small><i aria-hidden="true">✦</i><strong>{{ card.name }}</strong><b>#{{ card.number }}</b></span>{% endif %}
+        </a>
+      {% empty %}
+        <div class="floating-card card-1"><span class="card-placeholder"><small>DEXORA</small><i aria-hidden="true">✦</i><strong>Tu colección<br>empieza aquí</strong><b>001</b></span></div>
+        <div class="floating-card card-2"><span class="card-placeholder gold"><small>DEXORA</small><i aria-hidden="true">✦</i><strong>Ordenada por<br>especie</strong><b>025</b></span></div>
+        <div class="floating-card card-3"><span class="card-placeholder cyan"><small>DEXORA</small><i aria-hidden="true">✦</i><strong>Cartas físicas<br>TCG</strong><b>151</b></span></div>
+      {% endfor %}
+    </div>
+    <div class="hero-controls reveal">
+      <form class="hero-search" action="{% url 'catalog:species-list' %}" method="get" role="search">
+        <label class="sr-only" for="home-search">Buscar por nombre o número</label>
+        <input id="home-search" name="q" placeholder="Busca Pikachu o #025" autocomplete="off">
+        <button type="submit" aria-label="Buscar cartas">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="m16 16 4.25 4.25"></path>
+          </svg>
+        </button>
+      </form>
+      <div class="hero-actions"><a class="button" href="{% url 'catalog:species-list' %}">Explorar cartas</a><a class="button button-gold" href="{% if user.is_authenticated %}{% url 'collection:list' %}{% else %}{% url 'login' %}{% endif %}">Mi colección</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="stats-band" aria-label="Resumen de Dexora Cards">
+  <div class="shell stats-grid">
+    <div><strong data-count="{{ stats.species }}">{{ stats.species }}</strong><span>especies disponibles</span></div>
+    <div><strong data-count="{{ collection_stats.pokemon }}">{{ collection_stats.pokemon }}</strong><span>Pokémon registrados</span></div>
+    <div><strong data-count="{{ collection_stats.cards }}">{{ collection_stats.cards }}</strong><span>cartas en tu colección</span></div>
+    <div><strong class="stat-generation">{{ collection_stats.top_generation }}</strong><span>generación dominante</span></div>
+  </div>
+</section>
+
+<section class="section shell">
+  <div class="section-heading species-heading">
+    <h2>Todos los Pokémon</h2>
+    <a class="section-icon-link" href="{% url 'catalog:species-list' %}" aria-label="Explorar todos los Pokémon" title="Explorar todos los Pokémon">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+        <path d="M5 12h14"></path>
+        <path d="m14 7 5 5-5 5"></path>
+      </svg>
+    </a>
+  </div>
+  <div class="species-carousel" aria-label="Todas las especies Pokémon en orden nacional">
+    <div class="species-track" style="--carousel-duration: {{ carousel_duration }}s">
+      <div class="species-sequence">
+        {% for species in carousel_species %}
+        <a class="species-chip" href="{{ species.get_absolute_url }}"><span>#{{ species.national_dex_number|stringformat:"04d" }}</span><span class="species-chip-art{% if species.has_artwork %} has-artwork{% endif %}">{% if species.has_artwork %}<img src="{{ species.effective_artwork }}" alt="" width="96" height="96" loading="lazy" data-image-fallback>{% endif %}<b aria-hidden="true">{{ species.display_name|slice:":1" }}</b></span><strong>{{ species.display_name }}</strong><small>{{ species.card_count }} carta{{ species.card_count|pluralize }}</small></a>
+        {% empty %}<div class="empty-inline">Carga los datos demo para ver las especies.</div>{% endfor %}
+      </div>
+      {% if carousel_species %}
+      <div class="species-sequence" aria-hidden="true">
+        {% for species in carousel_species %}
+        <a class="species-chip" href="{{ species.get_absolute_url }}" tabindex="-1"><span>#{{ species.national_dex_number|stringformat:"04d" }}</span><span class="species-chip-art{% if species.has_artwork %} has-artwork{% endif %}">{% if species.has_artwork %}<img src="{{ species.effective_artwork }}" alt="" width="96" height="96" loading="lazy" data-image-fallback>{% endif %}<b aria-hidden="true">{{ species.display_name|slice:":1" }}</b></span><strong>{{ species.display_name }}</strong><small>{{ species.card_count }} carta{{ species.card_count|pluralize }}</small></a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

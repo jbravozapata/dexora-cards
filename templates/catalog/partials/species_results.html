@@ -1,0 +1,27 @@
+<div class="result-meta"><p><strong>{{ page_obj.paginator.count }}</strong> especies encontradas</p><span class="htmx-indicator">Actualizando…</span></div>
+<div class="species-grid">
+{% for species in page_obj %}
+  <article class="species-card reveal type-primary-{{ species.primary_type }}{% if species.secondary_type %} type-secondary-{{ species.secondary_type }} is-dual-type{% endif %}">
+    <span class="species-type-pattern primary" aria-hidden="true"></span>
+    {% if species.secondary_type %}<span class="species-type-pattern secondary" aria-hidden="true"></span>{% endif %}
+    <a class="species-card-hitbox" href="{{ species.get_absolute_url }}" aria-label="Ver cartas de {{ species.display_name }}"></a>
+    {% if user.is_authenticated %}
+      <button class="species-quick-add" type="button" aria-label="A&ntilde;adir una carta de {{ species.display_name }}" title="A&ntilde;adir carta" hx-get="{% url 'collection:quick-picker' species.slug %}" hx-target="#quick-add-content" hx-swap="innerHTML" aria-haspopup="dialog" aria-controls="quick-add-dialog">
+    {% else %}
+      <a class="species-quick-add" href="{% url 'login' %}?next={{ species.get_absolute_url|urlencode }}" aria-label="Inicia sesi&oacute;n para a&ntilde;adir una carta de {{ species.display_name }}" title="A&ntilde;adir carta">
+    {% endif %}
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    {% if user.is_authenticated %}</button>{% else %}</a>{% endif %}
+    <div class="species-number">#{{ species.national_dex_number|stringformat:"04d" }}</div>
+    <div class="species-portrait{% if species.has_artwork %} has-artwork{% endif %}">
+      {% if species.has_artwork %}<img src="{{ species.effective_artwork }}" alt="{{ species.display_name }}" width="120" height="120" loading="lazy" data-image-fallback>{% endif %}
+      <span class="species-monogram" aria-hidden="true">{{ species.display_name|slice:":1" }}</span>
+    </div>
+    <div class="species-info"><h2>{{ species.display_name }}</h2><p>{{ species.generation }}</p><div class="type-row">{% for type in species.types %}<span class="type type-{{ type }}">{{ type }}</span>{% endfor %}</div></div>
+    <div class="species-card-count"><strong>{{ species.card_count }}</strong><span>cartas</span></div>
+  </article>
+{% empty %}
+  <div class="empty-state"><div class="empty-mark">⌕</div><h2>No encontramos esa especie</h2><p>Prueba otro nombre, número o combinación de filtros.</p><a href="{% url 'catalog:species-list' %}" class="button">Limpiar filtros</a></div>
+{% endfor %}
+</div>
+{% include "partials/pagination.html" %}

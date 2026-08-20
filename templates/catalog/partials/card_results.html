@@ -1,0 +1,14 @@
+<div class="result-meta"><p><strong>{{ page_obj.paginator.count }}</strong> resultados</p><span class="htmx-indicator">Actualizando…</span></div>
+<div class="card-grid">
+{% for card in page_obj %}
+  <article class="tcg-card reveal">
+    {% with is_wished=card.is_wished placement="grid" %}{% include "wishlist/partials/toggle_button.html" %}{% endwith %}
+    {% with owned_quantity=card.quick_owned_quantity placement="grid" %}{% include "collections/partials/card_quick_add_button.html" %}{% endwith %}
+    <a class="tcg-card-link" href="{{ card.get_absolute_url }}">
+    <div class="card-image-wrap">{% if card.has_real_image %}<img src="{{ card.effective_image }}" alt="Carta {{ card.name }}, {{ card.set.name }}" width="367" height="512" loading="lazy">{% else %}<span class="card-placeholder"><small>DEXORA</small><i aria-hidden="true">✦</i><strong>{{ card.name }}</strong><b>#{{ card.number }}</b></span>{% endif %}</div>
+      <div class="tcg-card-info"><h3>{{ card.name }}</h3><p>{{ card.set.name }}</p>{% if card.types %}<div class="tcg-card-types" aria-label="Tipos de la carta">{% for type in card.types %}<span class="type type-{{ type|lower }}">{{ type }}</span>{% endfor %}</div>{% endif %}<span>#{{ card.number }}{% if card.rarity %} · {{ card.rarity }}{% endif %}</span></div>
+    </a>
+  </article>
+{% empty %}<div class="empty-state"><div class="empty-mark">◇</div><h2>No hay cartas para estos filtros</h2><p>Vuelve a mostrar todas las expansiones o rarezas.</p></div>{% endfor %}
+</div>
+{% include "partials/pagination.html" %}

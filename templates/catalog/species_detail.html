@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ species.display_name }} · Cartas TCG{% endblock %}
+{% block content %}
+<header class="species-hero">
+  <div class="shell species-hero-grid">
+    <nav class="entity-nav species-entity-nav" aria-label="Navegar entre Pok&eacute;mon">
+      {% if previous_species %}
+        <a href="{{ previous_species.get_absolute_url }}" aria-label="Pok&eacute;mon anterior: {{ previous_species.display_name }}" title="{{ previous_species.display_name }}">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </a>
+      {% else %}<span class="is-disabled" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></span>{% endif %}
+      <span class="entity-nav-position">#{{ species.national_dex_number|stringformat:"04d" }} / {{ species_total }}</span>
+      {% if next_species %}
+        <a href="{{ next_species.get_absolute_url }}" aria-label="Pok&eacute;mon siguiente: {{ next_species.display_name }}" title="{{ next_species.display_name }}">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      {% else %}<span class="is-disabled" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>{% endif %}
+    </nav>
+    <div class="species-number-block"><div class="species-hero-artwork{% if species.has_artwork %} has-artwork{% endif %}">{% if species.has_artwork %}<img src="{{ species.effective_artwork }}" alt="{{ species.display_name }}" width="220" height="220" data-image-fallback>{% endif %}<span aria-hidden="true">{{ species.display_name|slice:":1" }}</span></div><p class="dex-big">#{{ species.national_dex_number|stringformat:"04d" }}</p></div>
+    <div><p class="eyebrow">{{ species.generation }}</p><h1>{{ species.display_name }}</h1><div class="type-row large">{% for type in species.types %}<span class="type type-{{ type }}">{{ type }}</span>{% endfor %}</div>{% if species.description %}<p class="species-description">{{ species.description }}</p>{% endif %}{% if tcg_coverage.types %}<div class="tcg-coverage"><span>Tipos presentes en sus cartas</span><div class="type-row">{% for type in tcg_coverage.types %}<span class="type type-{{ type|lower }}">{{ type }}</span>{% endfor %}</div>{% if tcg_coverage.identity_count > 1 %}<p><strong>{{ tcg_coverage.identity_count }}</strong> nombres o formas impresas: {% for identity in tcg_coverage.identities %}{{ identity }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if tcg_coverage.remaining_identities %} y {{ tcg_coverage.remaining_identities }} más{% endif %}.</p>{% endif %}</div>{% endif %}</div>
+    <div class="species-total"><strong>{{ total_cards }}</strong><span>cartas conocidas</span></div>
+  </div>
+</header>
+<section class="shell section">
+  <form class="filters filters-cards" method="get" hx-get="{{ species.get_absolute_url }}" hx-target="#card-results" hx-push-url="true" hx-trigger="change">
+    <div><label for="set">Expansión</label><select id="set" name="set"><option value="">Todas</option>{% for item in sets %}<option value="{{ item.external_id }}" {% if request.GET.set == item.external_id %}selected{% endif %}>{{ item.name }}</option>{% endfor %}</select></div>
+    <div><label for="rarity">Rareza</label><select id="rarity" name="rarity"><option value="">Todas</option>{% for item in rarities %}<option {% if request.GET.rarity == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+    <div><label for="year">Año</label><select id="year" name="year"><option value="">Todos</option>{% for item in years %}<option {% if request.GET.year == item|stringformat:"s" %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+    <div><label for="order">Ordenar</label><select id="order" name="order"><option value="newest">Más recientes</option><option value="oldest" {% if request.GET.order == 'oldest' %}selected{% endif %}>Más antiguas</option><option value="name" {% if request.GET.order == 'name' %}selected{% endif %}>Nombre</option></select></div>
+  </form>
+  <div id="card-results" class="results-wrap">{% include "catalog/partials/card_results.html" %}</div>
+</section>
+{% endblock %}

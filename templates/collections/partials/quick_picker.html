@@ -1,0 +1,49 @@
+<div class="quick-picker-head">
+  <div>
+    <p class="eyebrow">A&ntilde;adir r&aacute;pidamente</p>
+    <h2 id="quick-add-title">{{ species.display_name }}</h2>
+    <p>Elige la carta exacta. Se agregar&aacute; como est&aacute;ndar, Near Mint.</p>
+  </div>
+  <span class="quick-picker-count">{{ total_cards }} cartas</span>
+</div>
+
+{% if added_card %}
+  <div class="quick-add-confirmation" role="status">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+    {{ added_card.name }} fue a&ntilde;adida a tu colecci&oacute;n.
+  </div>
+{% endif %}
+
+<div class="quick-card-list">
+  {% for card in cards %}
+    <article class="quick-card{% if added_card.pk == card.pk %} was-added{% endif %}">
+      <a class="quick-card-preview" href="{{ card.get_absolute_url }}" aria-label="Ver {{ card.name }}">
+        {% if card.has_real_image %}
+          <img src="{{ card.effective_image }}" alt="" width="72" height="100" loading="lazy" data-image-fallback>
+        {% else %}
+          <span class="quick-card-placeholder" aria-hidden="true">{{ card.name|slice:":1" }}</span>
+        {% endif %}
+      </a>
+      <div class="quick-card-copy">
+        <strong>{{ card.name }}</strong>
+        <span>{{ card.set.name }} &middot; #{{ card.number }}</span>
+        {% if card.quick_owned_quantity %}<small>{{ card.quick_owned_quantity }} en tu colecci&oacute;n</small>{% endif %}
+      </div>
+      <div class="quick-card-actions">
+      {% with is_wished=card.is_wished placement="quick" %}{% include "wishlist/partials/toggle_button.html" %}{% endwith %}
+      <form method="post" action="{% url 'collection:quick-add' species.slug card.slug %}" hx-post="{% url 'collection:quick-add' species.slug card.slug %}" hx-target="#quick-add-content" hx-swap="innerHTML">
+        {% csrf_token %}
+        <button class="quick-card-add" type="submit" aria-label="A&ntilde;adir {{ card.name }} a mi colecci&oacute;n" title="A&ntilde;adir una copia">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </form>
+      </div>
+    </article>
+  {% empty %}
+    <div class="quick-picker-empty"><span aria-hidden="true">&loz;</span><p>A&uacute;n no hay cartas disponibles para esta especie.</p></div>
+  {% endfor %}
+</div>
+
+{% if total_cards > 24 %}
+  <a class="quick-picker-all" href="{{ species.get_absolute_url }}">Ver las {{ total_cards }} cartas de {{ species.display_name }} &rarr;</a>
+{% endif %}

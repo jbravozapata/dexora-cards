@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ card.name }} · {{ card.set.name }}{% endblock %}
+{% block content %}
+<section class="shell card-detail">
+  <div class="detail-image reveal">{% with placement="detail" %}{% include "wishlist/partials/toggle_button.html" %}{% endwith %}{% if card.has_real_image %}<img src="{{ card.effective_image }}" alt="Carta {{ card.name }} de {{ card.set.name }}" width="734" height="1024">{% else %}<span class="card-placeholder detail-placeholder"><small>DEXORA · SIN IMAGEN</small><i aria-hidden="true">✦</i><strong>{{ card.name }}</strong><b>{{ card.set.name }} · #{{ card.number }}</b></span>{% endif %}</div>
+  <div class="detail-copy reveal">
+    <div class="detail-toolbar">
+      <a class="back-link" href="{% if navigation_species %}{{ navigation_species.get_absolute_url }}{% else %}{% url 'catalog:species-list' %}{% endif %}">&larr; Volver a {% if navigation_species %}{{ navigation_species.display_name }}{% else %}Cardex{% endif %}</a>
+      {% if navigation_species and version_count %}
+        <nav class="entity-nav card-entity-nav" aria-label="Navegar entre cartas de {{ navigation_species.display_name }}">
+          {% if previous_card %}
+            <a href="{% url 'catalog:card-detail' previous_card.slug %}" aria-label="Carta anterior: {{ previous_card.name }}" title="{{ previous_card.name }} &middot; {{ previous_card.set__name }}">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </a>
+          {% else %}<span class="is-disabled" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></span>{% endif %}
+          <span class="entity-nav-position">{{ card_position }} / {{ version_count }}</span>
+          {% if next_card %}
+            <a href="{% url 'catalog:card-detail' next_card.slug %}" aria-label="Carta siguiente: {{ next_card.name }}" title="{{ next_card.name }} &middot; {{ next_card.set__name }}">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
+          {% else %}<span class="is-disabled" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>{% endif %}
+        </nav>
+      {% endif %}
+    </div>
+    <p class="eyebrow">{{ card.set.series }}</p><h1>{{ card.name }}</h1><p class="set-name">{{ card.set.name }} <span>#{{ card.number }}</span></p>
+    <dl class="card-facts"><div><dt>Rareza</dt><dd>{{ card.rarity|default:"No especificada" }}</dd></div><div><dt>Artista</dt><dd>{{ card.artist|default:"No especificado" }}</dd></div><div><dt>Tipo</dt><dd>{{ card.types|join:", "|default:"—" }}</dd></div><div><dt>Subtipo</dt><dd>{{ card.subtypes|join:", "|default:"—" }}</dd></div><div><dt>HP</dt><dd>{{ card.hp|default:"—" }}</dd></div><div><dt>Lanzamiento</dt><dd>{{ card.set.release_date|date:"Y"|default:"—" }}</dd></div></dl>
+    <div class="related"><span>Especies relacionadas</span><div>{% for species in card.species.all %}<a href="{{ species.get_absolute_url }}">#{{ species.national_dex_number|stringformat:"04d" }} {{ species.display_name }}</a>{% empty %}<span>Sin relación registrada</span>{% endfor %}</div></div>
+    {% if user.is_authenticated %}<a class="button button-wide" href="{% url 'collection:item-edit' card.slug %}">{% if collection_item %}Editar en mi colección · {{ collection_item.quantity }}{% else %}Añadir a mi colección{% endif %}</a>{% if collection_item %}<a class="remove-detail" href="{% url 'collection:item-delete' collection_item.pk %}">Retirar de mi colección</a>{% endif %}{% else %}<a class="button button-wide" href="{% url 'login' %}?next={{ request.path|urlencode }}">Ingresa para añadirla</a>{% endif %}
+    {% if user.is_staff %}<a class="admin-link" href="{% url 'catalog:card-image-upload' card.slug %}">Sustituir imagen manualmente</a>{% endif %}
+  </div>
+</section>
+{% endblock %}

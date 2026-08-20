@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Mi colección · Dexora Cards{% endblock %}
+{% block content %}
+<header class="page-hero shell"><h1>Mi colección</h1></header>
+<section class="shell collection-stats"><div><strong>{{ totals.different|default:0 }}</strong><span>cartas diferentes</span></div><div><strong>{{ totals.copies|default:0 }}</strong><span>ejemplares totales</span></div><div><strong>{{ species_owned }}</strong><span>especies cubiertas</span></div></section>
+<section class="shell section">
+  <form class="filters collection-filters" method="get"><div class="search-field"><label for="q">Buscar en mi colección</label><input id="q" name="q" value="{{ request.GET.q }}" placeholder="Carta o expansión"></div><div><label for="set">Expansión</label><select id="set" name="set"><option value="">Todas</option>{% for item in sets %}<option value="{{ item.card__set__external_id }}" {% if request.GET.set == item.card__set__external_id %}selected{% endif %}>{{ item.card__set__name }}</option>{% endfor %}</select></div><button class="button button-secondary">Filtrar</button></form>
+  <div class="collection-list">
+    {% for item in page_obj %}
+      <article class="collection-row">
+        {% with card=item.card is_wished=item.card.is_wished placement="row" %}{% include "wishlist/partials/toggle_button.html" %}{% endwith %}
+        <a class="collection-thumb" href="{{ item.card.get_absolute_url }}">{% if item.card.has_real_image %}<img src="{{ item.card.effective_image }}" alt="Carta {{ item.card.name }}" width="80" height="112" loading="lazy" data-image-fallback>{% else %}{% with related_species=item.card.species.all|first %}{% if related_species.has_artwork %}<img class="species-artwork-fallback" src="{{ related_species.effective_artwork }}" alt="{{ related_species.display_name }}; la carta no tiene imagen" width="80" height="112" loading="lazy" data-image-fallback><span class="sr-only">Imagen de especie usada como referencia</span>{% else %}<span>{{ item.card.name|slice:":1" }}</span>{% endif %}{% endwith %}{% endif %}</a>
+        <div><h2><a href="{{ item.card.get_absolute_url }}">{{ item.card.name }}</a></h2><p>{{ item.card.set.name }} · #{{ item.card.number }}</p><small>{{ item.get_variant_display }} · {{ item.get_condition_display }}</small></div>
+        <div class="quantity"><span>Cantidad</span><strong>{{ item.quantity }}</strong></div>
+        <div class="row-actions"><a href="{% url 'collection:item-edit' item.card.slug %}">Editar</a><a class="danger-link" href="{% url 'collection:item-delete' item.pk %}">Eliminar</a></div>
+      </article>
+    {% empty %}<div class="empty-state"><div class="empty-mark">＋</div><h2>Tu archivo está listo</h2><p>Explora una especie y añade tu primera carta física.</p><a class="button" href="{% url 'catalog:species-list' %}">Explorar Cardex</a></div>{% endfor %}
+  </div>{% include "partials/pagination.html" %}
+</section>{% endblock %}
