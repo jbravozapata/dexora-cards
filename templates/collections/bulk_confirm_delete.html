@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Confirmar eliminación · Mi colección{% endblock %}
+{% block content %}
+<section class="shell narrow form-page bulk-confirm-page">
+  <p class="eyebrow">CONFIRMAR ACCIÓN MASIVA</p>
+  <h1>Retirar selección</h1>
+  <p>Vas a retirar <strong>{{ total_cards }} carta{{ total_cards|pluralize }}</strong> y sus <strong>{{ total_copies }} ejemplar{{ total_copies|pluralize:"es" }}</strong>. Las cartas seguirán disponibles en Cardex.</p>
+  <div class="bulk-confirm-list" aria-label="Cartas seleccionadas">
+    {% for item in items %}<div><span>{{ forloop.counter|stringformat:"02d" }}</span><p><strong>{{ item.card.name }}</strong><small>{{ item.card.set.name }} · #{{ item.card.number }}</small></p><b>×{{ item.quantity }}</b></div>{% endfor %}
+  </div>
+  <p class="bulk-warning"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 4.7 2.6 18a2 2 0 0 0 1.73 3h15.34a2 2 0 0 0 1.73-3L13.7 4.7a2 2 0 0 0-3.4 0Z"/></svg>Esta acción elimina los registros y sus cantidades; no puede deshacerse desde la aplicación.</p>
+  <form method="post" class="confirm-actions">{% csrf_token %}{% for item in items %}<input type="hidden" name="item_ids" value="{{ item.pk }}">{% endfor %}<input type="hidden" name="confirm" value="yes"><button class="button button-danger" type="submit">Eliminar {{ total_cards }} carta{{ total_cards|pluralize }}</button><a class="button button-secondary" href="{% url 'collection:list' %}">Volver sin eliminar</a></form>
+</section>
+{% endblock %}

@@ -9,4 +9,5 @@ urlpatterns = [
     path("rapido/<slug:species_slug>/<slug:card_slug>/", views.quick_add, name="quick-add"),
     path("carta/<slug:card_slug>/", views.item_edit, name="item-edit"),
     path("item/<int:pk>/eliminar/", views.item_delete, name="item-delete"),
+    path("eliminar-seleccion/", views.bulk_delete, name="bulk-delete"),
 ]

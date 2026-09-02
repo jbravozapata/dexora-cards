@@ -6,6 +6,7 @@ from django.db.models import Count, Q, Sum
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
 from catalog.models import PokemonSpecies, TCGCard
 from .forms import CollectionItemForm
@@ -68,6 +69,40 @@ def item_delete(request, pk):
         item.delete(); messages.success(request, "La carta fue retirada de tu colección.")
         return redirect("collection:list")
     return render(request, "collections/item_confirm_delete.html", {"item": item})
+
+
+@login_required
+@require_POST
+def bulk_delete(request):
+    try:
+        selected_ids = sorted({int(value) for value in request.POST.getlist("item_ids") if int(value) > 0})
+    except (TypeError, ValueError):
+        selected_ids = []
+
+    items = list(
+        UserCollectionItem.objects.filter(user=request.user, pk__in=selected_ids)
+        .select_related("card", "card__set")
+        .order_by("card__name", "card__set__name")
+    )
+    if not items:
+        messages.warning(request, "Selecciona al menos una carta de tu colección.")
+        return redirect("collection:list")
+
+    total_copies = sum(item.quantity for item in items)
+    if request.POST.get("confirm") == "yes":
+        with transaction.atomic():
+            UserCollectionItem.objects.filter(user=request.user, pk__in=[item.pk for item in items]).delete()
+        messages.success(
+            request,
+            f"Se retiraron {len(items)} cartas y {total_copies} ejemplares de tu colección.",
+        )
+        return redirect("collection:list")
+
+    return render(request, "collections/bulk_confirm_delete.html", {
+        "items": items,
+        "total_cards": len(items),
+        "total_copies": total_copies,
+    })
 
 
 def _quick_picker_context(user, species, added_card=None):

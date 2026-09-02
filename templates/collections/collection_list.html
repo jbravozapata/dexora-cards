@@ -1,12 +1,31 @@
-{% extends "base.html" %}{% block title %}Mi colección · Dexora Cards{% endblock %}
+{% extends "base.html" %}
+{% block title %}Mi colección · Dexora Cards{% endblock %}
 {% block content %}
 <header class="page-hero shell"><h1>Mi colección</h1></header>
 <section class="shell collection-stats"><div><strong>{{ totals.different|default:0 }}</strong><span>cartas diferentes</span></div><div><strong>{{ totals.copies|default:0 }}</strong><span>ejemplares totales</span></div><div><strong>{{ species_owned }}</strong><span>especies cubiertas</span></div></section>
-<section class="shell section">
+<section class="shell section collection-workspace" data-bulk-workspace>
   <form class="filters collection-filters" method="get"><div class="search-field"><label for="q">Buscar en mi colección</label><input id="q" name="q" value="{{ request.GET.q }}" placeholder="Carta o expansión"></div><div><label for="set">Expansión</label><select id="set" name="set"><option value="">Todas</option>{% for item in sets %}<option value="{{ item.card__set__external_id }}" {% if request.GET.set == item.card__set__external_id %}selected{% endif %}>{{ item.card__set__name }}</option>{% endfor %}</select></div><button class="button button-secondary">Filtrar</button></form>
+
+  {% if page_obj.paginator.count %}
+  <div class="collection-manage-head">
+    <p><strong>{{ page_obj.paginator.count }}</strong> carta{{ page_obj.paginator.count|pluralize }} en esta vista</p>
+    <button class="bulk-mode-toggle" type="button" aria-pressed="false" data-bulk-toggle>
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5"/></svg>
+      <span data-bulk-toggle-copy>Gestionar colección</span>
+    </button>
+  </div>
+  <form class="bulk-toolbar" id="bulk-delete-form" method="post" action="{% url 'collection:bulk-delete' %}" aria-label="Acciones de eliminación masiva" data-bulk-form>
+    {% csrf_token %}
+    <label class="bulk-select-all"><input type="checkbox" data-select-all><span>Seleccionar esta página</span></label>
+    <p><strong data-selected-count>0</strong> seleccionadas</p>
+    <div><button class="bulk-cancel" type="button" data-bulk-cancel>Cancelar</button><button class="button button-danger button-small" type="submit" disabled data-bulk-submit>Continuar</button></div>
+  </form>
+  {% endif %}
+
   <div class="collection-list">
     {% for item in page_obj %}
       <article class="collection-row">
+        <label class="bulk-row-select" title="Seleccionar {{ item.card.name }}"><input type="checkbox" name="item_ids" value="{{ item.pk }}" form="bulk-delete-form" data-bulk-item><span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 12 4 4 8-9"/></svg></span><span class="sr-only">Seleccionar {{ item.card.name }}</span></label>
         {% with card=item.card is_wished=item.card.is_wished placement="row" %}{% include "wishlist/partials/toggle_button.html" %}{% endwith %}
         <a class="collection-thumb" href="{{ item.card.get_absolute_url }}">{% if item.card.has_real_image %}<img src="{{ item.card.effective_image }}" alt="Carta {{ item.card.name }}" width="80" height="112" loading="lazy" data-image-fallback>{% else %}{% with related_species=item.card.species.all|first %}{% if related_species.has_artwork %}<img class="species-artwork-fallback" src="{{ related_species.effective_artwork }}" alt="{{ related_species.display_name }}; la carta no tiene imagen" width="80" height="112" loading="lazy" data-image-fallback><span class="sr-only">Imagen de especie usada como referencia</span>{% else %}<span>{{ item.card.name|slice:":1" }}</span>{% endif %}{% endwith %}{% endif %}</a>
         <div><h2><a href="{{ item.card.get_absolute_url }}">{{ item.card.name }}</a></h2><p>{{ item.card.set.name }} · #{{ item.card.number }}</p><small>{{ item.get_variant_display }} · {{ item.get_condition_display }}</small></div>
@@ -14,5 +33,7 @@
         <div class="row-actions"><a href="{% url 'collection:item-edit' item.card.slug %}">Editar</a><a class="danger-link" href="{% url 'collection:item-delete' item.pk %}">Eliminar</a></div>
       </article>
     {% empty %}<div class="empty-state"><div class="empty-mark">＋</div><h2>Tu archivo está listo</h2><p>Explora una especie y añade tu primera carta física.</p><a class="button" href="{% url 'catalog:species-list' %}">Explorar Cardex</a></div>{% endfor %}
-  </div>{% include "partials/pagination.html" %}
-</section>{% endblock %}
+  </div>
+  {% include "partials/pagination.html" %}
+</section>
+{% endblock %}

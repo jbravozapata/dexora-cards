@@ -9,7 +9,7 @@ MVP web para explorar las especies de la Pokédex nacional, consultar sus cartas
 - `config/`: configuración Django, URLs raíz y despliegue WSGI/ASGI.
 - `core/`: inicio, estadísticas cacheadas y contenido común.
 - `catalog/`: especies, expansiones, cartas, consultas, integración con APIs, admin y comandos.
-- `collections_app/`: inventario personal, cantidades, variantes y condiciones. Su etiqueta Django es `collections` sin colisionar con el módulo estándar de Python.
+- `collections_app/`: inventario personal, cantidades, variantes y condiciones, con eliminación individual o masiva mediante confirmación segura. Su etiqueta Django es `collections` sin colisionar con el módulo estándar de Python.
 - `wishlist_app/`: lista privada de cartas deseadas, filtros y acciones rápidas mediante estrellas SVG.
 - `users/`: registro, perfil de coleccionista personalizable y formularios de cuenta; autenticación y recuperación usan Django Auth.
 - `templates/`: vistas semánticas y parciales HTMX.

@@ -108,6 +108,64 @@ class CollectionTests(TestCase):
         self.assertEqual(self.client.post(reverse("collection:item-delete", args=[item.pk])).status_code, 404)
         self.assertTrue(UserCollectionItem.objects.filter(pk=item.pk).exists())
 
+    def test_collection_shows_bulk_management_controls(self):
+        UserCollectionItem.objects.create(user=self.user, card=self.card)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("collection:list"))
+
+        self.assertContains(response, "Gestionar colección")
+        self.assertContains(response, reverse("collection:bulk-delete"))
+        self.assertContains(response, 'name="item_ids"')
+
+    def test_bulk_delete_requires_login_and_post(self):
+        item = UserCollectionItem.objects.create(user=self.user, card=self.card)
+        url = reverse("collection:bulk-delete")
+
+        response = self.client.post(url, {"item_ids": [item.pk]})
+        self.assertRedirects(response, f"{reverse('login')}?next={url}")
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get(url).status_code, 405)
+
+    def test_bulk_delete_previews_then_deletes_only_owned_items(self):
+        owned = UserCollectionItem.objects.create(user=self.user, card=self.card, quantity=3)
+        second_card = TCGCard.objects.create(
+            external_id="bulk-second", name="Raichu", set=self.tcg_set, number="14"
+        )
+        other_card = TCGCard.objects.create(
+            external_id="bulk-foreign", name="Eevee", set=self.tcg_set, number="51"
+        )
+        second = UserCollectionItem.objects.create(user=self.user, card=second_card, quantity=2)
+        foreign = UserCollectionItem.objects.create(user=self.other, card=other_card, quantity=9)
+        url = reverse("collection:bulk-delete")
+        self.client.force_login(self.user)
+
+        preview = self.client.post(url, {"item_ids": [owned.pk, second.pk, foreign.pk]})
+        self.assertEqual(preview.status_code, 200)
+        self.assertContains(preview, "Retirar selección")
+        self.assertContains(preview, "Pikachu")
+        self.assertContains(preview, "Raichu")
+        self.assertNotContains(preview, "Eevee")
+        self.assertContains(preview, "5 ejemplares")
+
+        result = self.client.post(url, {
+            "item_ids": [owned.pk, second.pk, foreign.pk],
+            "confirm": "yes",
+        })
+        self.assertRedirects(result, reverse("collection:list"))
+        self.assertFalse(UserCollectionItem.objects.filter(pk__in=[owned.pk, second.pk]).exists())
+        self.assertTrue(UserCollectionItem.objects.filter(pk=foreign.pk, user=self.other).exists())
+
+    def test_bulk_delete_rejects_empty_or_invalid_selection(self):
+        item = UserCollectionItem.objects.create(user=self.user, card=self.card)
+        self.client.force_login(self.user)
+        url = reverse("collection:bulk-delete")
+
+        response = self.client.post(url, {"item_ids": ["invalid"], "confirm": "yes"})
+
+        self.assertRedirects(response, reverse("collection:list"))
+        self.assertTrue(UserCollectionItem.objects.filter(pk=item.pk).exists())
+
     def test_collection_summary(self):
         UserCollectionItem.objects.create(user=self.user, card=self.card, quantity=3)
         self.client.force_login(self.user)

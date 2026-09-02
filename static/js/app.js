@@ -100,6 +100,50 @@ document.body.addEventListener('wishlist:updated', (event) => {
   }
 });
 
+const bulkWorkspace = document.querySelector('[data-bulk-workspace]');
+if (bulkWorkspace) {
+  const bulkToggle = bulkWorkspace.querySelector('[data-bulk-toggle]');
+  const bulkCancel = bulkWorkspace.querySelector('[data-bulk-cancel]');
+  const bulkForm = bulkWorkspace.querySelector('[data-bulk-form]');
+  const selectAll = bulkWorkspace.querySelector('[data-select-all]');
+  const selectedCount = bulkWorkspace.querySelector('[data-selected-count]');
+  const submitButton = bulkWorkspace.querySelector('[data-bulk-submit]');
+  const itemChecks = [...bulkWorkspace.querySelectorAll('[data-bulk-item]')];
+
+  const updateBulkSelection = () => {
+    const checked = itemChecks.filter((item) => item.checked).length;
+    if (selectedCount) selectedCount.textContent = String(checked);
+    if (submitButton) submitButton.disabled = checked === 0;
+    if (selectAll) {
+      selectAll.checked = itemChecks.length > 0 && checked === itemChecks.length;
+      selectAll.indeterminate = checked > 0 && checked < itemChecks.length;
+    }
+  };
+
+  const setBulkMode = (active) => {
+    bulkWorkspace.classList.toggle('bulk-mode', active);
+    bulkToggle?.setAttribute('aria-pressed', String(active));
+    const copy = bulkToggle?.querySelector('[data-bulk-toggle-copy]');
+    if (copy) copy.textContent = active ? 'Selección activa' : 'Gestionar colección';
+    if (!active) itemChecks.forEach((item) => { item.checked = false; });
+    updateBulkSelection();
+  };
+
+  bulkToggle?.addEventListener('click', () => setBulkMode(!bulkWorkspace.classList.contains('bulk-mode')));
+  bulkCancel?.addEventListener('click', () => setBulkMode(false));
+  selectAll?.addEventListener('change', () => {
+    itemChecks.forEach((item) => { item.checked = selectAll.checked; });
+    updateBulkSelection();
+  });
+  itemChecks.forEach((item) => item.addEventListener('change', updateBulkSelection));
+  bulkForm?.addEventListener('submit', (event) => {
+    if (!itemChecks.some((item) => item.checked)) event.preventDefault();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && bulkWorkspace.classList.contains('bulk-mode')) setBulkMode(false);
+  });
+}
+
 const counters = document.querySelectorAll('[data-count]');
 
 const animateCounter = (element) => {
