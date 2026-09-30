@@ -6,7 +6,10 @@
 - `core`: inicio y elementos globales.
 - `catalog`: modelos TCG/Pokédex, selectores, servicios API, comandos y admin.
 - `collections_app`: colección privada del usuario (app label `collections`).
+- `pokedex_app`: especies obtenidas en la colección Pokémon general.
 - `wishlist_app`: cartas deseadas y acciones rápidas privadas.
+- `api`: API REST autenticada para clientes móviles.
+- `mobile`: aplicación Flutter Android/iOS.
 - `users`: registro; Django Auth resuelve sesiones y contraseñas.
 - `templates`, `static`, `media`: presentación y subidas locales.
 
@@ -17,6 +20,8 @@
 - Plantillas en español, HTML semántico y estilos reutilizables en `static/css/app.css`.
 - Usar `select_related`/`prefetch_related`, paginación e índices para catálogos.
 - Migraciones versionadas para todo cambio de modelo.
+- La Pokédex personal pagina siempre 16 especies para conservar la cuadrícula móvil 4×4.
+- Flutter usa `--dart-define=DEXORA_API_URL=...`; nunca escribir hosts de producción ni tokens en el código.
 
 ## Comandos
 
@@ -26,6 +31,8 @@ python manage.py check
 python manage.py test
 python manage.py makemigrations --check --dry-run
 python manage.py seed_demo
+cd mobile && flutter analyze
+cd mobile && flutter test
 ```
 
 ## Definición de terminado

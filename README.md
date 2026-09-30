@@ -1,6 +1,6 @@
 # Dexora Cards
 
-MVP web para explorar las especies de la Pokédex nacional, consultar sus cartas físicas de Pokémon TCG y registrar una colección personal bajo la identidad **Dexora Cards**.
+Plataforma web y móvil para explorar las especies de la Pokédex nacional, consultar sus cartas físicas de Pokémon TCG y registrar colecciones personales bajo la identidad **Dexora Cards**.
 
 > Proyecto comunitario no oficial. No está afiliado, respaldado ni patrocinado por Nintendo, Creatures Inc., Game Freak ni The Pokémon Company. Las marcas e imágenes pertenecen a sus respectivos titulares.
 
@@ -10,8 +10,11 @@ MVP web para explorar las especies de la Pokédex nacional, consultar sus cartas
 - `core/`: inicio, estadísticas cacheadas y contenido común.
 - `catalog/`: especies, expansiones, cartas, consultas, integración con APIs, admin y comandos.
 - `collections_app/`: inventario personal, cantidades, variantes y condiciones, con eliminación individual o masiva mediante confirmación segura. Su etiqueta Django es `collections` sin colisionar con el módulo estándar de Python.
+- `pokedex_app/`: progreso personal de especies obtenidas para **Mis 1025 Pokémon**, separado de las cartas TCG.
 - `wishlist_app/`: lista privada de cartas deseadas, filtros y acciones rápidas mediante estrellas SVG.
+- `api/`: API JSON autenticada por token para los clientes móviles.
 - `users/`: registro, perfil de coleccionista personalizable y formularios de cuenta; autenticación y recuperación usan Django Auth.
+- `mobile/`: aplicación Flutter para Android/iOS con Cardex, Pokédex personal, colección, wishlist y perfil.
 - `templates/`: vistas semánticas y parciales HTMX.
 - `static/`: CSS, JavaScript modular y placeholder local.
 
@@ -24,6 +27,7 @@ Cada usuario puede personalizar su perfil con avatar, portada horizontal, nombre
 - Python 3.12+
 - PostgreSQL 15+ recomendado; SQLite funciona para desarrollo y demo
 - Docker Compose opcional
+- Flutter 3.38+ y Android Studio/Xcode para compilar la aplicación móvil
 
 ## Instalación local
 
@@ -43,6 +47,43 @@ python manage.py runserver
 Abre `http://127.0.0.1:8000/`. `seed_demo` es idempotente y añade 10 especies y 10 cartas abstractas sin imágenes oficiales, suficientes para revisar todas las vistas sin acceso a las APIs.
 
 En macOS/Linux cambia la activación por `source .venv/bin/activate` y usa `cp .env.example .env`.
+
+## Aplicación móvil
+
+La app Flutter reutiliza los usuarios y el catálogo del backend. El token de sesión se guarda mediante el almacén seguro del sistema operativo. **Mis 1025 Pokémon** es una colección general de especies: marcar un Pokémon como obtenido no añade cartas TCG y añadir una carta no marca automáticamente la especie.
+
+El módulo presenta 16 especies por página en una cuadrícula 4×4, búsqueda, filtros por estado, progreso total y registro directo de obtenido/pendiente. La API fija el tamaño de página en 16 para que el comportamiento sea consistente en todos los dispositivos.
+
+Inicia primero el backend para un emulador Android:
+
+```powershell
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8002
+```
+
+Después ejecuta Flutter:
+
+```powershell
+cd mobile
+flutter pub get
+flutter run --dart-define=DEXORA_API_URL=http://10.0.2.2:8002/api/v1
+```
+
+`10.0.2.2` representa el equipo anfitrión desde el emulador Android. Para un dispositivo físico usa la IP LAN del equipo, añade esa IP a `DJANGO_ALLOWED_HOSTS` y conserva ambos dispositivos en la misma red. Para iOS Simulator puede usarse `http://127.0.0.1:8002/api/v1`. Producción debe usar HTTPS y desactivar tráfico HTTP plano.
+
+Comprobaciones móviles:
+
+```powershell
+cd mobile
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+flutter build apk --debug
+```
+
+### API móvil
+
+La API vive bajo `/api/v1/`. Sus recursos principales son `auth/login`, `dashboard`, `species`, `cards`, `collection`, `wishlist`, `my-pokemon` y `profile`. Salvo el inicio de sesión, todos exigen `Authorization: Token …`. Las consultas privadas siempre se limitan al usuario autenticado.
 
 ## Variables de entorno
 
@@ -103,9 +144,9 @@ python manage.py makemigrations --check --dry-run
 python manage.py collectstatic --noinput
 ```
 
-Las pruebas usan SQLite temporal y mocks, nunca las APIs reales. Cubren modelos, restricciones, prioridad de imagen, relaciones, búsqueda/filtros, comandos, permisos, ciclo de colección y wishlist, formularios de imagen, registro y páginas principales.
+Las pruebas usan SQLite temporal y mocks, nunca las APIs reales. Cubren modelos, restricciones, prioridad de imagen, relaciones, búsqueda/filtros, comandos, permisos, ciclo de colección y wishlist, formularios de imagen, registro, páginas principales y API móvil. Flutter incluye pruebas de modelos y componentes, además de análisis estático.
 
-El repositorio incluye GitHub Actions en `.github/workflows/ci.yml`. Cada push o pull request contra `main` valida las migraciones, ejecuta los checks, las pruebas con PostgreSQL 17 y la compilación de archivos estáticos. Las credenciales del workflow son efímeras y exclusivas del contenedor de CI.
+El repositorio incluye GitHub Actions en `.github/workflows/ci.yml`. Cada push o pull request contra `main` valida las migraciones, ejecuta los checks, las pruebas con PostgreSQL 17, la compilación de archivos estáticos, el análisis y las pruebas Flutter y un APK Android de depuración. Las credenciales del workflow son efímeras y exclusivas del contenedor de CI.
 
 ## Docker y PostgreSQL
 
@@ -127,6 +168,7 @@ La aplicación queda en `http://localhost:8000/`. PostgreSQL y `media/` usan vol
 - Estadísticas de inicio cacheadas cinco minutos.
 - Imágenes con dimensiones explícitas, `loading="lazy"` y sustituciones locales protegidas.
 - Seguridad preparada mediante CSRF, autorización por propietario, validación de imágenes, cookies seguras/HSTS fuera de debug y secretos por entorno.
+- La aplicación móvil usa Flutter y una API DRF con tokens revocables, límites de solicitudes y aislamiento de datos por usuario.
 
 ## Limitaciones conocidas del MVP
 
@@ -135,3 +177,4 @@ La aplicación queda en `http://localhost:8000/`. PostgreSQL y `media/` usan vol
 - Las imágenes remotas dependen de la disponibilidad y políticas de la API de origen.
 - SQLite no reproduce todas las características de concurrencia de PostgreSQL.
 - No incluye venta, precios, intercambios, mensajería, sobres virtuales ni pagos.
+- El MVP móvil aún no ofrece modo sin conexión ni notificaciones; requiere conectividad con el backend.
