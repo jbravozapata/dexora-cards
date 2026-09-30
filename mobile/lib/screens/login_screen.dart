@@ -14,18 +14,26 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final username = TextEditingController();
   final password = TextEditingController();
+  late final TextEditingController server;
+
+  @override
+  void initState() {
+    super.initState();
+    server = TextEditingController(text: widget.controller.api.baseUrl);
+  }
 
   @override
   void dispose() {
     username.dispose();
     password.dispose();
+    server.dispose();
     super.dispose();
   }
 
   Future<void> submit() async {
     if (username.text.trim().isEmpty || password.text.isEmpty) return;
     FocusScope.of(context).unfocus();
-    await widget.controller.login(username.text, password.text);
+    await widget.controller.login(username.text, password.text, server.text);
   }
 
   @override
@@ -73,6 +81,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Contraseña',
                     prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: server,
+                  keyboardType: TextInputType.url,
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Servidor Dexora',
+                    hintText: 'http://192.168.1.20:8002/api/v1',
+                    prefixIcon: Icon(Icons.dns_outlined),
                   ),
                 ),
                 if (widget.controller.error != null)

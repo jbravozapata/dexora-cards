@@ -16,20 +16,36 @@ class ApiClient {
     : _http = httpClient ?? http.Client(),
       _storage = storage ?? const FlutterSecureStorage();
 
-  static const baseUrl = String.fromEnvironment(
+  static const defaultBaseUrl = String.fromEnvironment(
     'DEXORA_API_URL',
     defaultValue: 'http://10.0.2.2:8002/api/v1',
   );
   static const _tokenKey = 'dexora_api_token';
+  static const _serverKey = 'dexora_api_url';
   final http.Client _http;
   final FlutterSecureStorage _storage;
   String? _token;
+  String _baseUrl = defaultBaseUrl;
 
   bool get isAuthenticated => _token?.isNotEmpty == true;
+  String get baseUrl => _baseUrl;
 
   Future<bool> restoreSession() async {
+    _baseUrl = await _storage.read(key: _serverKey) ?? defaultBaseUrl;
     _token = await _storage.read(key: _tokenKey);
     return isAuthenticated;
+  }
+
+  Future<void> configureServer(String value) async {
+    final normalized = value.trim().replaceFirst(RegExp(r'/+$'), '');
+    final uri = Uri.tryParse(normalized);
+    if (uri == null ||
+        !uri.hasAuthority ||
+        !{'http', 'https'}.contains(uri.scheme)) {
+      throw const ApiException('Escribe una dirección de servidor válida.');
+    }
+    _baseUrl = normalized;
+    await _storage.write(key: _serverKey, value: normalized);
   }
 
   Future<void> login(String username, String password) async {
@@ -98,7 +114,7 @@ class ApiClient {
       if (entry.value?.isNotEmpty == true) clean[entry.key] = entry.value!;
     }
     return Uri.parse(
-      '$baseUrl$path',
+      '$_baseUrl$path',
     ).replace(queryParameters: clean.isEmpty ? null : clean);
   }
 

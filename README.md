@@ -69,7 +69,7 @@ flutter pub get
 flutter run --dart-define=DEXORA_API_URL=http://10.0.2.2:8002/api/v1
 ```
 
-`10.0.2.2` representa el equipo anfitrión desde el emulador Android. Para un dispositivo físico usa la IP LAN del equipo, añade esa IP a `DJANGO_ALLOWED_HOSTS` y conserva ambos dispositivos en la misma red. Para iOS Simulator puede usarse `http://127.0.0.1:8002/api/v1`. Producción debe usar HTTPS y desactivar tráfico HTTP plano.
+`10.0.2.2` representa el equipo anfitrión desde el emulador Android. La pantalla de acceso permite cambiar el servidor sin recompilar: para un dispositivo físico usa la IP LAN del equipo, añade esa IP a `DJANGO_ALLOWED_HOSTS` y conserva ambos dispositivos en la misma red. Para iOS Simulator puede usarse `http://127.0.0.1:8002/api/v1`. Producción debe usar HTTPS y desactivar tráfico HTTP plano.
 
 Comprobaciones móviles:
 

@@ -16,11 +16,12 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> login(String username, String password) async {
+  Future<bool> login(String username, String password, String server) async {
     busy = true;
     error = null;
     notifyListeners();
     try {
+      await api.configureServer(server);
       await api.login(username.trim(), password);
       authenticated = true;
       return true;
